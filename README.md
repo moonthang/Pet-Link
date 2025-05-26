@@ -103,38 +103,36 @@ Este proyecto sirve como un portafolio demostrando habilidades en desarrollo ful
 ## 📸 Capturas de Pantalla
 
 *   **Página de Inicio de Sesión:**
-![login](https://github.com/user-attachments/assets/77f2cf11-0b5f-431a-ac35-8f8d173982a2)
+![login](https://github.com/user-attachments/assets/75f6e3ab-1ea9-439e-a38c-7df17daf2709)
 
 *   **Página de Registro:**
-![registro](https://github.com/user-attachments/assets/b63d3f56-20f0-42bc-a2f8-c236c9b357cb)
+![registro](https://github.com/user-attachments/assets/4c30e9c2-a46f-46b5-9e2c-fbd28d0b9822)
 
 *   **Dashboard Principal del Usuario (Lista de Mascotas con Búsqueda):**
-![dash-usuario](https://github.com/user-attachments/assets/e47a3526-20c3-4d8d-a118-e678b92c2192)
+![dash-usuario](https://github.com/user-attachments/assets/445c5bfd-cc92-4bf8-854c-4dd1882c926d)
 
 *   **Perfil de Mascota (Vista Dueño/Admin con Visor de Imágenes y Mapa):**
-![perfil-mascota-user](https://github.com/user-attachments/assets/d06e1da7-ebcc-4e14-a765-ddab28e9eb8f)
+![perfil-mascota-user](https://github.com/user-attachments/assets/eb5e6b84-c838-450f-91f6-5e18a709bf8e)
 
 *   **Perfil Público de Mascota (Vista QR Escaneado):**
-![perfil-mascota-publico](https://github.com/user-attachments/assets/7630334c-490d-4421-b7fe-50f612c5e713)
+![perfil-mascota-publico](https://github.com/user-attachments/assets/ae95833c-e9b8-4a42-b6b8-46cfb90ee020)
 
 *   **Modal del Código QR:**
 ![qrMascota](https://github.com/user-attachments/assets/4ebdd8ff-e51d-46e8-9f66-579d3786c62b)
 
 *   **Formulario de Agregar/Editar Mascota:**
-![editar-mascota](https://github.com/user-attachments/assets/f0433218-d6f3-4d24-b014-a51139f2798a)
+![editar-mascota](https://github.com/user-attachments/assets/51dcf149-d9c0-4daf-b76c-705b90636efb)
 
 *   **Formulario de Editar Perfil de Usuario:**
-![editar-perfil](https://github.com/user-attachments/assets/74d694f9-9e49-451e-9418-462ace5b1df6)
+![editar-perfil](https://github.com/user-attachments/assets/8bfc83f9-c104-420e-ab7d-d8e056e5f333)
 
 *   **Panel de Administrador (Lista de Usuarios con Búsqueda):**
-![lista-usuario-admin](https://github.com/user-attachments/assets/919c5944-4dda-4a8e-8b91-2e389b3fa386)
-![perfil-usuario-vistaAdmin](https://github.com/user-attachments/assets/6a42b6a2-76c8-4c77-a634-6d508e695f0e)
-
+![lista-usuario-admin](https://github.com/user-attachments/assets/3e2197f6-d2e0-4490-a38d-b7887e384a75)
+![perfil-usuario-vistaAdmin](https://github.com/user-attachments/assets/81d7aff4-98fb-42b3-8941-a90a6bde2466)
 
 *   **Página de Notificaciones:**
-![pagina-notificaciones](https://github.com/user-attachments/assets/e608a039-27ce-4f05-bb51-8aea343ef501)
-![Notificación-user](https://github.com/user-attachments/assets/4fb4d963-146d-4358-a3a5-62dc23aa7b2c)
-
+![pagina-notificaciones](https://github.com/user-attachments/assets/4be94300-eab5-477c-8c33-8bb3dc6e87f5)
+![Notificación-user](https://github.com/user-attachments/assets/9af2ab25-881d-44a0-82fb-531f2d76c9c8)
 
 * El problema (issue) que aparece en algunas capturas corresponde a que la extensión LanguageTool modifica el DOM, y al deshabilitar la extensión, este problema desaparece.
 

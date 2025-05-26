@@ -118,7 +118,7 @@ Este proyecto sirve como un portafolio demostrando habilidades en desarrollo ful
 ![perfil-mascota-publico](https://github.com/user-attachments/assets/ae95833c-e9b8-4a42-b6b8-46cfb90ee020)
 
 *   **Modal del Código QR:**
-![qrMascota](https://github.com/user-attachments/assets/4ebdd8ff-e51d-46e8-9f66-579d3786c62b)
+![qrMascota](https://github.com/user-attachments/assets/881d8fe8-cf24-4dde-88c2-75e6683c2812)
 
 *   **Formulario de Agregar/Editar Mascota:**
 ![editar-mascota](https://github.com/user-attachments/assets/51dcf149-d9c0-4daf-b76c-705b90636efb)

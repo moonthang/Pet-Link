@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Trash2 } from "lucide-react";
 import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface DeletePetButtonProps {
   petId: string;
@@ -26,9 +27,20 @@ interface DeletePetButtonProps {
 
 export function DeletePetButton({ petId, petName, onDeleted }: DeletePetButtonProps) {
   const { toast } = useToast();
+  const { appUser } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
 
+  const isDemoUser = appUser?.nivel === 'demo';
+
   const handleDelete = async () => {
+    if (isDemoUser) {
+      toast({
+        title: "Acción no permitida",
+        description: "La cuenta de demostración no puede eliminar mascotas.",
+        variant: "destructive"
+      });
+      return;
+    }
     setIsLoading(true);
     try {
       const result = await deletePet(petId);
@@ -59,9 +71,8 @@ export function DeletePetButton({ petId, petName, onDeleted }: DeletePetButtonPr
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <Button variant="destructive" size="sm">
-          <Trash2 className="mr-2 h-4 w-4" />
-          Eliminar
+        <Button variant="destructive" size="icon" disabled={isDemoUser} title={isDemoUser ? "Deshabilitado para cuenta demo" : "Eliminar mascota"}>
+            <Trash2 className="h-4 w-4" />
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>

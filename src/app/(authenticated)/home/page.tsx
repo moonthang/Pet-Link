@@ -28,7 +28,6 @@ export default function AuthenticatedHomePage() {
         setAllPets(userPets);
         setFilteredPets(userPets);
       } catch (error) {
-        console.error("Error al obtener mascotas para usuario autenticado:", error);
         setAllPets([]); 
         setFilteredPets([]);
       } finally {
@@ -97,15 +96,14 @@ export default function AuthenticatedHomePage() {
               aria-label="Buscar mascotas"
             />
           </div>
-          {appUser?.nivel === 'admin' && (
+          {appUser?.nivel === 'admin' || appUser?.nivel === 'demo' ? (
             <Link href="/pets/new" passHref>
               <Button>
                 <PlusCircle className="mr-2 h-4 w-4" />
                 Agregar Nueva Mascota
               </Button>
             </Link>
-          )}
-           {appUser?.nivel !== 'admin' && (
+          ) : (
             <Link href="/pets/new" passHref>
               <Button>
                 <PlusCircle className="mr-2 h-4 w-4" />
@@ -128,3 +126,4 @@ export default function AuthenticatedHomePage() {
     </div>
   );
 }
+

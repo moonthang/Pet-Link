@@ -7,6 +7,7 @@ import { redirect } from "next/navigation";
 import { db, auth, collection, addDoc, getDoc, getDocs, doc, updateDoc, deleteDoc, query, where, orderBy, Timestamp } from "@/lib/firebase";
 import { format, subYears, isValid, parseISO } from "date-fns";
 import * as dateFnsTz from 'date-fns-tz';
+import { deleteImageFromImageKit } from "./imageKitActions";
 
 const BOGOTA_TIMEZONE = 'America/Bogota';
 
@@ -50,7 +51,7 @@ export async function getAllPets(currentAppUser: AppUser | null): Promise<PetPro
   const mascotasCollectionRef = collection(db, "mascotas");
   let q;
 
-  if (currentAppUser.nivel === 'admin') {
+  if (currentAppUser.nivel === 'admin' || currentAppUser.nivel === 'demo') {
     q = query(mascotasCollectionRef, orderBy("createdAt", "desc"));
   } else {
     if (!currentAppUser.uid) {
@@ -82,7 +83,6 @@ export async function getAllPets(currentAppUser: AppUser | null): Promise<PetPro
 
 export async function getPetById(id: string): Promise<PetProfile | null> {
   if (!id || typeof id !== 'string' || id.trim() === '') {
-    console.warn(`[petActions] getPetById: ID de mascota no válido o vacío proporcionado: '${id}'`);
     return null;
   }
   const petDocRef = doc(db, "mascotas", id);
@@ -94,7 +94,6 @@ export async function getPetById(id: string): Promise<PetProfile | null> {
       return null;
     }
   } catch (error) {
-    console.error("[petActions] Error fetching pet by ID from Firestore: ", error);
     return null;
   }
 }
@@ -114,9 +113,7 @@ export async function getPetsByUserId(userId: string): Promise<PetProfile[]> {
     });
     return pets;
   } catch (error: any) {
-    console.error(`[petActions] Error al obtener mascotas para userId (${userId}):`, JSON.stringify(error, Object.getOwnPropertyNames(error)));
     if (error.code === 'failed-precondition') {
-        console.error("Firestore query failed, this often means a required index is missing. Please check your Firestore indexes for collection 'mascotas' with fields 'userId' (ASC) and 'createdAt' (DESC).");
     }
     return [];
   }
@@ -148,8 +145,10 @@ async function addPetToFirestore(data: Omit<PetProfile, "id" | "createdAt" | "sc
     scanHistory: [],
     photoUrl: data.photoUrl || `https://placehold.co/300x200.png?text=${encodeURIComponent(data.name)}&data-ai-hint=${data.tipoAnimal?.toLowerCase() || 'animal'}`,
     photoPath: data.photoPath || null,
+    photoFileId: data.photoFileId || null,
     photoUrl2: data.photoUrl2 || null,
     photoPath2: data.photoPath2 || null,
+    photoFileId2: data.photoFileId2 || null,
   };
 
   newPetData.caracteristicaEspecial = data.caracteristicaEspecial || null;
@@ -174,7 +173,6 @@ async function addPetToFirestore(data: Omit<PetProfile, "id" | "createdAt" | "sc
     revalidatePath(`/public/pets/${addedPet.id}`);
     return addedPet;
   } catch (error: any) {
-    console.error("[addPetToFirestore] Error adding pet to Firestore. Code:", error.code, "Message:", error.message, "Full Error:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
     throw error; 
   }
 }
@@ -187,6 +185,7 @@ async function updatePetInFirestore(
   try {
     const existingPetSnap = await getDoc(petDocRef);
     if (!existingPetSnap.exists()) return null;
+    const existingPetData = existingPetSnap.data() as PetProfile;
     
     const updateData: Record<string, any> = { ...data };
 
@@ -203,7 +202,7 @@ async function updatePetInFirestore(
       }
     }
     
-    const optionalFields = ['caracteristicaEspecial', 'ownerEmail', 'ownerPhone2', 'photoUrl', 'photoPath', 'photoUrl2', 'photoPath2', 'breed', 'sexo', 'ownerName', 'ownerPhone1'];
+    const optionalFields = ['caracteristicaEspecial', 'ownerEmail', 'ownerPhone2', 'photoUrl', 'photoPath', 'photoFileId', 'photoUrl2', 'photoPath2', 'photoFileId2', 'breed', 'sexo', 'ownerName', 'ownerPhone1'];
     optionalFields.forEach(field => {
         if (field in updateData && (updateData[field] === '' || updateData[field] === undefined)) {
             updateData[field] = null; 
@@ -212,6 +211,14 @@ async function updatePetInFirestore(
     
     if (!('userId' in data)) { 
         delete updateData.userId; 
+    }
+
+    // Image deletion logic
+    if (existingPetData.photoFileId && (updateData.photoUrl === null || updateData.photoUrl === '')) {
+      await deleteImageFromImageKit(existingPetData.photoFileId);
+    }
+    if (existingPetData.photoFileId2 && (updateData.photoUrl2 === null || updateData.photoUrl2 === '')) {
+      await deleteImageFromImageKit(existingPetData.photoFileId2);
     }
 
     await updateDoc(petDocRef, updateData);
@@ -228,7 +235,6 @@ async function updatePetInFirestore(
     revalidatePath(`/pets/${id}/edit`);
     return updatedPet;
   } catch (error: any) {
-    console.error("[updatePetInFirestore] Error updating pet in Firestore. Code:", error.code, "Message:", error.message, "Full Error:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
     throw error; 
   }
 }
@@ -236,26 +242,36 @@ async function updatePetInFirestore(
 export async function deletePet(id: string): Promise<{ success: boolean }> {
   const petDocRef = doc(db, "mascotas", id);
   try {
+    const petSnap = await getDoc(petDocRef);
+    if(petSnap.exists()) {
+      const petData = petSnap.data() as PetProfile;
+      if (petData.photoFileId) {
+        await deleteImageFromImageKit(petData.photoFileId);
+      }
+      if (petData.photoFileId2) {
+        await deleteImageFromImageKit(petData.photoFileId2);
+      }
+    }
     await deleteDoc(petDocRef);
     revalidatePath("/");
     revalidatePath("/home");
     return { success: true };
   } catch (error) {
-    console.error("Error deleting pet from Firestore: ", error);
     return { success: false };
   }
 }
 
 export async function createPetAction(formData: FormData, creatorUserId: string, creatorName: string): Promise<{ petId?: string; error?: string }> {
-  console.log(`[createPetAction] Iniciando creación de mascota para creatorUserId: ${creatorUserId}, creatorName: ${creatorName}`);
 
   const name = formData.get("name") as string;
   const tipoAnimal = formData.get("tipoAnimal") as PetProfile['tipoAnimal'];
   const breed = formData.get("breed") as string | null; 
   const photoUrl = formData.get("photoUrl") as string;
   const photoPath = formData.get("photoPath") as string | null;
+  const photoFileId = formData.get("photoFileId") as string | null;
   const photoUrl2 = formData.get("photoUrl2") as string | null;
   const photoPath2 = formData.get("photoPath2") as string | null;
+  const photoFileId2 = formData.get("photoFileId2") as string | null;
   const fechaNacimientoStr = formData.get("fechaNacimiento") as string | null; 
   const sexo = formData.get("sexo") as PetProfile['sexo'] | null;
   const caracteristicaEspecial = formData.get("caracteristicaEspecial") as string | undefined;
@@ -284,8 +300,10 @@ export async function createPetAction(formData: FormData, creatorUserId: string,
       breed: breed || null, 
       photoUrl: photoUrl || `https://placehold.co/300x200.png?text=${encodeURIComponent(name || "Mascota")}&data-ai-hint=${tipoAnimal?.toLowerCase() || 'animal'}`,
       photoPath: photoPath || null,
+      photoFileId: photoFileId || null,
       photoUrl2: photoUrl2 || null,
       photoPath2: photoPath2 || null,
+      photoFileId2: photoFileId2 || null,
       fechaNacimiento: fechaNacimientoStr || format(subYears(new Date(),1), 'yyyy-MM-dd'), 
       sexo: sexo || null,
       caracteristicaEspecial: caracteristicaEspecial || null,
@@ -299,7 +317,6 @@ export async function createPetAction(formData: FormData, creatorUserId: string,
 
     return { petId: newPet.id }; 
   } catch (error: any) {
-    console.error("[createPetAction] Error detallado durante addPetToFirestore. Código:", error.code, "Mensaje:", error.message, "Error completo:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
     let errorMessage = "Ocurrió un error inesperado al crear el perfil de la mascota. Por favor, inténtalo de nuevo más tarde.";
     if (error.code) { 
       errorMessage = `Error de Firestore (${error.code}): ${error.message}`;
@@ -315,8 +332,10 @@ export async function updatePetAction(petId: string, formData: FormData): Promis
   const breed = formData.get("breed") as string;
   const photoUrl = formData.get("photoUrl") as string;
   const photoPath = formData.get("photoPath") as string | null;
+  const photoFileId = formData.get("photoFileId") as string | null;
   const photoUrl2 = formData.get("photoUrl2") as string | null;
   const photoPath2 = formData.get("photoPath2") as string | null;
+  const photoFileId2 = formData.get("photoFileId2") as string | null;
   const tipoAnimal = formData.get("tipoAnimal") as PetProfile['tipoAnimal'];
   const fechaNacimientoStr = formData.get("fechaNacimiento") as string;
   const sexo = formData.get("sexo") as PetProfile['sexo'];
@@ -340,8 +359,10 @@ export async function updatePetAction(petId: string, formData: FormData): Promis
       breed: breed || null, 
       photoUrl: photoUrl || `https://placehold.co/300x200.png?text=${encodeURIComponent(name || "Mascota")}&data-ai-hint=${tipoAnimal?.toLowerCase() || 'animal'}`,
       photoPath: photoPath || null,
+      photoFileId: photoFileId || null,
       photoUrl2: photoUrl2 || null,
       photoPath2: photoPath2 || null,
+      photoFileId2: photoFileId2 || null,
       tipoAnimal,
       fechaNacimiento: fechaNacimientoStr,
       sexo,
@@ -352,7 +373,6 @@ export async function updatePetAction(petId: string, formData: FormData): Promis
       ownerPhone2: ownerPhone2 && ownerPhone2.trim() !== '' ? ownerPhone2 : null,
     });
   } catch (error: any) {
-    console.error("[updatePetAction] Error detallado durante updatePetInFirestore. Código:", error.code, "Mensaje:", error.message, "Error completo:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
     let errorMessage = "Ocurrió un error inesperado al guardar los datos de la mascota. Por favor, inténtalo de nuevo más tarde.";
      if (error.code) { 
       errorMessage = `Error de Firestore (${error.code}): ${error.message}`;
@@ -407,7 +427,6 @@ export async function logPetScanLocationAction(petId: string, latitude: number, 
     
     return newScan; 
   } catch (error: any) {
-    console.error(`[petActions] Error al registrar escaneo para mascota ${petId}. Código: ${error.code}, Mensaje: ${error.message}, Error completo:`, JSON.stringify(error, Object.getOwnPropertyNames(error)));
     let errorMessage = "Error al registrar escaneo en la base de datos.";
     if (error.code) {
       errorMessage = `Error de Firestore (${error.code}): ${error.message}`;
@@ -446,7 +465,6 @@ export async function claimPetByIdentifier(identifier: string, claimingUserId: s
     return { petId: identifier, needsProfileCompletion: true };
 
   } catch (error: any) {
-    console.error("[claimPetByIdentifier] Error al reclamar mascota. Código:", error.code, "Mensaje:", error.message, "Error completo:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
     let errorMessage = "Error al intentar reclamar la mascota. Por favor, verifica el identificador e inténtalo de nuevo.";
      if (error.code) { 
       errorMessage = `Error de Firestore (${error.code}): ${error.message}`;

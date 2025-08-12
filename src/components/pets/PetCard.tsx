@@ -5,7 +5,7 @@ import type { PetProfile } from "@/types";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Eye, FilePenLine, Dog, Cat, Tag, Copy } from "lucide-react";
+import { Eye, FilePenLine, Dog, Cat, Tag, Copy, Trash2 } from "lucide-react";
 import { PetQRModal } from "./PetQRModal";
 import { DeletePetButton } from "./DeletePetButton";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +13,7 @@ import { PetDisplayImage } from "./PetDisplayImage";
 import { calculateAge } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface PetCardProps {
   pet: PetProfile;
@@ -40,7 +41,6 @@ export function PetCard({ pet, onPetDeleted }: PetCardProps) {
         description: `El ID ${pet.id} ha sido copiado al portapapeles.`,
       });
     } catch (err) {
-      console.error("Error al copiar ID: ", err);
       toast({
         title: "Error al Copiar",
         description: "No se pudo copiar el ID al portapapeles.",
@@ -82,7 +82,7 @@ export function PetCard({ pet, onPetDeleted }: PetCardProps) {
           {pet.ownerPhone1 && <p><span className="font-semibold">Teléfono Principal:</span> {pet.ownerPhone1}</p>}
           {pet.ownerEmail && <p><span className="font-semibold">Email:</span> {pet.ownerEmail}</p>}
 
-          {appUser?.nivel === 'admin' && (
+          {(appUser?.nivel === 'admin' || appUser?.nivel === 'demo') && (
             <div className="mt-2 flex items-center space-x-1">
               <Badge variant="outline" className="text-xs flex items-center space-x-1 py-1">
                   <Tag className="h-3 w-3" />
@@ -95,28 +95,51 @@ export function PetCard({ pet, onPetDeleted }: PetCardProps) {
           )}
         </div>
       </CardContent>
-      <CardFooter className="flex flex-col sm:flex-row sm:justify-between gap-2 pt-4 border-t">
-        <div className="flex gap-2 flex-wrap">
-          <Link href={`/pets/${pet.id}`} passHref>
-            <Button variant="outline" size="sm" aria-label={`Ver perfil de ${pet.name}`}>
-              <Eye className="mr-2 h-4 w-4" />
-              Ver
-            </Button>
-          </Link>
-          <Link href={`/pets/${pet.id}/edit`} passHref>
-            <Button variant="outline" size="sm" aria-label={`Editar perfil de ${pet.name}`}>
-              <FilePenLine className="mr-2 h-4 w-4" />
-              Editar
-            </Button>
-          </Link>
-        </div>
-        <div className="flex gap-2 flex-wrap">
-          <PetQRModal pet={pet} />
+      <CardFooter className="flex justify-start sm:justify-center gap-2 pt-4 border-t">
+        <TooltipProvider delayDuration={200}>
+          <div className="flex flex-wrap gap-2">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Link href={`/pets/${pet.id}`} passHref>
+                  <Button variant="outline" size="icon" aria-label={`Ver perfil de ${pet.name}`}>
+                    <Eye className="h-4 w-4" />
+                  </Button>
+                </Link>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Ver Perfil</p>
+              </TooltipContent>
+            </Tooltip>
+            
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Link href={`/pets/${pet.id}/edit`} passHref>
+                  <Button variant="outline" size="icon" aria-label={`Editar perfil de ${pet.name}`}>
+                    <FilePenLine className="h-4 w-4" />
+                  </Button>
+                </Link>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Editar Perfil</p>
+              </TooltipContent>
+            </Tooltip>
 
-          {(appUser?.nivel === 'admin' || appUser?.uid === pet.userId) && (
-             <DeletePetButton petId={pet.id} petName={pet.name} onPetDeleted={onPetDeleted} />
-          )}
-        </div>
+            <PetQRModal pet={pet} />
+
+            {(appUser?.nivel === 'admin' || appUser?.uid === pet.userId) && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div>
+                    <DeletePetButton petId={pet.id} petName={pet.name} onDeleted={onPetDeleted} />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Eliminar</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+          </div>
+        </TooltipProvider>
       </CardFooter>
     </Card>
   );

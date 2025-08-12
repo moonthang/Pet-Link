@@ -50,8 +50,10 @@ const petSchema = z.object({
   breed: z.string().min(1, "La raza es obligatoria.").nullable().optional(),
   photoUrl: z.string().url("Debe ser una URL válida.").or(z.literal("")).optional().nullable(),
   photoPath: z.string().optional().nullable(),
+  photoFileId: z.string().optional().nullable(),
   photoUrl2: z.string().url("Debe ser una URL válida.").or(z.literal("")).optional().nullable(),
   photoPath2: z.string().optional().nullable(),
+  photoFileId2: z.string().optional().nullable(),
   fechaNacimiento: z.string().refine((val) => {
     if (!val) return false; 
     const date = parseISO(val);
@@ -97,6 +99,7 @@ export function PetForm({ pet }: PetFormProps) {
   const toYear = currentYear;
 
   const isAdminCreatingNew = appUser?.nivel === 'admin' && !pet;
+  const isDemoUser = appUser?.nivel === 'demo';
 
   const form = useForm<PetFormData>({
     resolver: zodResolver(petSchema),
@@ -106,8 +109,10 @@ export function PetForm({ pet }: PetFormProps) {
       breed: "",
       photoUrl: "",
       photoPath: null,
+      photoFileId: null,
       photoUrl2: "",
       photoPath2: null,
+      photoFileId2: null,
       fechaNacimiento: null,
       sexo: null,
       caracteristicaEspecial: "",
@@ -130,8 +135,10 @@ export function PetForm({ pet }: PetFormProps) {
         breed: pet.breed || "",
         photoUrl: pet.photoUrl || "",
         photoPath: pet.photoPath || null,
+        photoFileId: pet.photoFileId || null,
         photoUrl2: pet.photoUrl2 || "",
         photoPath2: pet.photoPath2 || null,
+        photoFileId2: pet.photoFileId2 || null,
         fechaNacimiento: pet.fechaNacimiento && isValid(new Date(pet.fechaNacimiento))
           ? dateFnsTz.formatInTimeZone(new Date(pet.fechaNacimiento), BOGOTA_TIMEZONE, 'yyyy-MM-dd')
           : null,
@@ -163,7 +170,8 @@ export function PetForm({ pet }: PetFormProps) {
         name: "",
         tipoAnimal: undefined,
         breed: "",
-        photoUrl: "", photoPath: null, photoUrl2: "", photoPath2: null,
+        photoUrl: "", photoPath: null, photoFileId: null,
+        photoUrl2: "", photoPath2: null, photoFileId2: null,
         fechaNacimiento: null,
         sexo: null,
         caracteristicaEspecial: "",
@@ -177,7 +185,8 @@ export function PetForm({ pet }: PetFormProps) {
         name: "",
         tipoAnimal: undefined,
         breed: PLACEHOLDER_BREED_ADMIN,
-        photoUrl: "", photoPath: null, photoUrl2: "", photoPath2: null,
+        photoUrl: "", photoPath: null, photoFileId: null,
+        photoUrl2: "", photoPath2: null, photoFileId2: null,
         fechaNacimiento: DEFAULT_BIRTH_DATE_STRING_ADMIN(),
         sexo: PLACEHOLDER_SEXO_ADMIN,
         caracteristicaEspecial: "",
@@ -191,37 +200,33 @@ export function PetForm({ pet }: PetFormProps) {
 
 
   const handleImageUploadSuccess = async (
-    newImageUrl: string,
+    newImageUrl: string | null,
     newImagePath: string | null,
+    newImageFileId: string | null,
     imageField: 'photoUrl' | 'photoUrl2',
-    pathField: 'photoPath' | 'photoPath2'
+    pathField: 'photoPath' | 'photoPath2',
+    fileIdField: 'photoFileId' | 'photoFileId2'
   ) => {
-    const oldPath = form.getValues(pathField);
+    const oldFileId = form.getValues(fileIdField);
 
-    if ((!newImageUrl || newImageUrl === '') && oldPath && !oldPath.startsWith('http')) {
+    if (oldFileId && oldFileId !== newImageFileId) {
       try {
-        await deleteImageFromImageKit(oldPath); 
-        toast({ title: "Imagen Anterior Eliminada", description: `La imagen anterior de ${pathField} ha sido eliminada de ImageKit.`});
+        await deleteImageFromImageKit(oldFileId); 
+        toast({ title: "Imagen Anterior Eliminada", description: `La imagen anterior de ${pathField} ha sido eliminada.`});
       } catch (e) {
-        console.error(`[PetForm] Failed to delete old image ${oldPath} from ImageKit`, e);
-      }
-    } else if (newImageUrl && newImagePath && oldPath && oldPath !== newImagePath && !oldPath.startsWith('http')) {
-      try {
-        await deleteImageFromImageKit(oldPath);
-        toast({ title: "Imagen Anterior Eliminada", description: `La imagen anterior de ${pathField} ha sido eliminada de ImageKit.`});
-      } catch (e) {
-        console.error(`[PetForm] Failed to delete old image ${oldPath} from ImageKit`, e);
+        console.error("Error eliminando imagen anterior de ImageKit:", e);
       }
     }
     
-    form.setValue(imageField, newImageUrl || null);
-    form.setValue(pathField, newImagePath || null);
+    form.setValue(imageField, newImageUrl);
+    form.setValue(pathField, newImagePath);
+    form.setValue(fileIdField, newImageFileId);
   };
 
 
   const onSubmit: SubmitHandler<PetFormData> = async (data) => {
-    if (!appUser?.uid) {
-      toast({ title: "Error de Autenticación", description: "No se pudo identificar al usuario.", variant: "destructive" });
+    if (!appUser?.uid || isDemoUser) {
+      toast({ title: "Acción no permitida", description: "La cuenta de demostración no puede guardar cambios.", variant: "destructive" });
       return;
     }
     setIsLoading(true);
@@ -249,9 +254,11 @@ export function PetForm({ pet }: PetFormProps) {
     
     if (!data.photoUrl) {
       formDataToSubmit.set("photoPath", "");
+      formDataToSubmit.set("photoFileId", "");
     }
     if (!data.photoUrl2) {
       formDataToSubmit.set("photoPath2", "");
+      formDataToSubmit.set("photoFileId2", "");
     }
 
     let result;
@@ -312,7 +319,7 @@ export function PetForm({ pet }: PetFormProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel htmlFor="name">Nombre</FormLabel>
-                    <FormControl><Input id="name" placeholder="Ej: Buddy" {...field} disabled={isLoading} /></FormControl>
+                    <FormControl><Input id="name" placeholder="Ej: Buddy" {...field} disabled={isLoading || isDemoUser} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -323,7 +330,7 @@ export function PetForm({ pet }: PetFormProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel htmlFor="tipoAnimal">Tipo de Animal</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value || ""} defaultValue={field.value || ""} disabled={isLoading}>
+                    <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value} disabled={isLoading || isDemoUser}>
                       <FormControl><SelectTrigger id="tipoAnimal"><SelectValue placeholder="Selecciona un tipo" /></SelectTrigger></FormControl>
                       <SelectContent>
                         <SelectItem value="Perro">Perro</SelectItem>
@@ -351,7 +358,7 @@ export function PetForm({ pet }: PetFormProps) {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel htmlFor="breed">Raza</FormLabel>
-                        <FormControl><Input id="breed" placeholder="Ej: Golden Retriever" {...field} value={field.value ?? ""} disabled={isLoading} /></FormControl>
+                        <FormControl><Input id="breed" placeholder="Ej: Golden Retriever" {...field} value={field.value ?? ""} disabled={isLoading || isDemoUser} /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -362,7 +369,7 @@ export function PetForm({ pet }: PetFormProps) {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel htmlFor="sexo">Sexo</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value || ""} defaultValue={field.value || ""} disabled={isLoading}>
+                        <Select onValueChange={field.onChange} value={field.value ?? undefined} defaultValue={field.value ?? undefined} disabled={isLoading || isDemoUser}>
                           <FormControl><SelectTrigger id="sexo"><SelectValue placeholder="Selecciona el sexo" /></SelectTrigger></FormControl>
                           <SelectContent>
                             <SelectItem value="Macho">Macho</SelectItem>
@@ -386,7 +393,7 @@ export function PetForm({ pet }: PetFormProps) {
                             <Button
                               variant={"outline"}
                               className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
-                              disabled={isLoading}
+                              disabled={isLoading || isDemoUser}
                             >
                               {field.value && isValid(parseISO(field.value)) ? (
                                 format(dateFnsTz.toDate(field.value + "T00:00:00", { timeZone: BOGOTA_TIMEZONE }), "PPP", { locale: es })
@@ -409,7 +416,7 @@ export function PetForm({ pet }: PetFormProps) {
                             toYear={toYear}
                           />
                            <div className="p-2 border-t text-right bg-background">
-                            <Button type="button" size="sm" onClick={() => setIsCalendarOpen(false)} disabled={isLoading}>OK</Button>
+                            <Button type="button" size="sm" onClick={() => setIsCalendarOpen(false)} disabled={isLoading || isDemoUser}>OK</Button>
                           </div>
                         </PopoverContent>
                       </Popover>
@@ -423,7 +430,7 @@ export function PetForm({ pet }: PetFormProps) {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel htmlFor="caracteristicaEspecial">Característica Especial (Opcional)</FormLabel>
-                      <FormControl><Textarea id="caracteristicaEspecial" placeholder="Ej: Muy juguetón, tiene una mancha particular, etc." {...field} value={field.value ?? ""} disabled={isLoading} /></FormControl>
+                      <FormControl><Textarea id="caracteristicaEspecial" placeholder="Ej: Muy juguetón, tiene una mancha particular, etc." {...field} value={field.value ?? ""} disabled={isLoading || isDemoUser} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -440,12 +447,14 @@ export function PetForm({ pet }: PetFormProps) {
                             labelTitle="Foto Principal de la Mascota"
                             initialImageUrl={field.value}
                             initialImagePath={form.getValues("photoPath")}
-                            onUploadSuccess={(imageUrl, imagePath) => {
-                              handleImageUploadSuccess(imageUrl, imagePath, 'photoUrl', 'photoPath');
+                            initialImageFileId={form.getValues("photoFileId")}
+                            onUploadSuccess={(imageUrl, imagePath, imageFileId) => {
+                              handleImageUploadSuccess(imageUrl, imagePath, imageFileId, 'photoUrl', 'photoPath', 'photoFileId');
                             }}
                             folder="pets_profile_images"
                             fileNamePrefix={nameWatched || "mascota"}
                             imageAiHint={getAiHintForUploader(true)}
+                            disabled={isDemoUser}
                           />
                         </FormControl>
                         {(appUser?.nivel !== 'admin' && (!form.getValues("photoUrl") || form.getValues("photoUrl")?.startsWith('https://placehold.co'))) && (
@@ -468,12 +477,14 @@ export function PetForm({ pet }: PetFormProps) {
                             labelTitle="Foto Secundaria (Opcional)"
                             initialImageUrl={field.value}
                             initialImagePath={form.getValues("photoPath2")}
-                            onUploadSuccess={(imageUrl, imagePath) => {
-                              handleImageUploadSuccess(imageUrl, imagePath, 'photoUrl2', 'photoPath2');
+                            initialImageFileId={form.getValues("photoFileId2")}
+                            onUploadSuccess={(imageUrl, imagePath, imageFileId) => {
+                              handleImageUploadSuccess(imageUrl, imagePath, imageFileId, 'photoUrl2', 'photoPath2', 'photoFileId2');
                             }}
                             folder="pets_profile_images_secondary"
                             fileNamePrefix={`${nameWatched || "mascota"}-alt`}
                             imageAiHint={getAiHintForUploader(false)}
+                            disabled={isDemoUser}
                           />
                         </FormControl>
                         <FormMessage />
@@ -493,7 +504,7 @@ export function PetForm({ pet }: PetFormProps) {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel htmlFor="ownerName">Nombre del Dueño</FormLabel>
-                      <FormControl><Input id="ownerName" placeholder={"Ej: Juan Pérez"} {...field} value={field.value ?? ""} disabled={isLoading} /></FormControl>
+                      <FormControl><Input id="ownerName" placeholder={"Ej: Juan Pérez"} {...field} value={field.value ?? ""} disabled={isLoading || isDemoUser} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -505,7 +516,7 @@ export function PetForm({ pet }: PetFormProps) {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel htmlFor="ownerPhone1">Teléfono Principal</FormLabel>
-                        <FormControl><Input id="ownerPhone1" type="tel" placeholder={"Ej: 3001234567"} {...field} value={field.value ?? ""} disabled={isLoading} /></FormControl>
+                        <FormControl><Input id="ownerPhone1" type="tel" placeholder={"Ej: 3001234567"} {...field} value={field.value ?? ""} disabled={isLoading || isDemoUser} /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -516,7 +527,7 @@ export function PetForm({ pet }: PetFormProps) {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel htmlFor="ownerPhone2">Teléfono Secundario (Opcional)</FormLabel>
-                        <FormControl><Input id="ownerPhone2" type="tel" placeholder="Ej: 3109876543" {...field} value={field.value ?? ""} disabled={isLoading} /></FormControl>
+                        <FormControl><Input id="ownerPhone2" type="tel" placeholder="Ej: 3109876543" {...field} value={field.value ?? ""} disabled={isLoading || isDemoUser} /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -528,7 +539,7 @@ export function PetForm({ pet }: PetFormProps) {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel htmlFor="ownerEmail">Email del Dueño (Opcional)</FormLabel>
-                      <FormControl><Input id="ownerEmail" type="email" placeholder="Ej: juan.perez@ejemplo.com" {...field} value={field.value ?? ""} disabled={isLoading} /></FormControl>
+                      <FormControl><Input id="ownerEmail" type="email" placeholder="Ej: juan.perez@ejemplo.com" {...field} value={field.value ?? ""} disabled={isLoading || isDemoUser} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -565,7 +576,7 @@ export function PetForm({ pet }: PetFormProps) {
                     render={({ field }) => (
                         <FormItem>
                         <FormLabel htmlFor="ownerEmailAdmin">Email del Dueño (Opcional)</FormLabel>
-                        <FormControl><Input id="ownerEmailAdmin" type="email" placeholder="juan.perez@ejemplo.com" {...field} value={field.value ?? ""} disabled={isLoading} /></FormControl>
+                        <FormControl><Input id="ownerEmailAdmin" type="email" placeholder="juan.perez@ejemplo.com" {...field} value={field.value ?? ""} disabled={isLoading || isDemoUser} /></FormControl>
                         <FormMessage />
                         </FormItem>
                     )}
@@ -576,7 +587,7 @@ export function PetForm({ pet }: PetFormProps) {
                     render={({ field }) => (
                         <FormItem>
                         <FormLabel htmlFor="ownerPhone2Admin">Teléfono Secundario (Opcional)</FormLabel>
-                        <FormControl><Input id="ownerPhone2Admin" type="tel" placeholder="3109876543" {...field} value={field.value ?? ""} disabled={isLoading} /></FormControl>
+                        <FormControl><Input id="ownerPhone2Admin" type="tel" placeholder="3109876543" {...field} value={field.value ?? ""} disabled={isLoading || isDemoUser} /></FormControl>
                         <FormMessage />
                         </FormItem>
                     )}
@@ -584,13 +595,13 @@ export function PetForm({ pet }: PetFormProps) {
               </>
             )}
 
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? (
+            <Button type="submit" className="w-full" disabled={isLoading || isDemoUser}>
+              {isDemoUser ? "Guardado deshabilitado para Demo" : (isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   {pet ? "Guardando Cambios..." : "Creando Perfil..."}
                 </>
-                ) : (pet ? "Guardar Cambios" : "Crear Perfil")}
+                ) : (pet ? "Guardar Cambios" : "Crear Perfil"))}
             </Button>
           </form>
         </Form>

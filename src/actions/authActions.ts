@@ -1,7 +1,8 @@
 
 'use server';
 
-import { auth, createUserWithEmailAndPassword, createUserProfileInFirestore } from '@/lib/firebase';
+import { auth, createUserWithEmailAndPassword } from '@/lib/firebase';
+import { createUserProfileInFirestore } from '@/actions/userActions';
 import type { AppUser } from '@/types';
 
 interface ActionResult {

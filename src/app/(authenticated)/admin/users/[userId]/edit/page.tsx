@@ -42,7 +42,7 @@ const adminEditProfileSchema = z.object({
   phone1: z.string().regex(/^[0-9+-]*$/, "Teléfono inválido").or(z.literal("")).optional(),
   phone2: z.string().regex(/^[0-9+-]*$/, "Teléfono inválido").or(z.literal("")).optional(),
   address: z.string().optional(),
-  nivel: z.enum(["user", "admin"], {
+  nivel: z.enum(["user", "admin", "demo"], {
     required_error: "Debes seleccionar un nivel de usuario.",
   }),
 });
@@ -60,6 +60,8 @@ export default function AdminEditUserPage() {
   const [isLoadingUser, setIsLoadingUser] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+
+  const isDemoUser = adminUser?.nivel === 'demo';
 
   const form = useForm<AdminEditProfileFormData>({
     resolver: zodResolver(adminEditProfileSchema),
@@ -109,6 +111,10 @@ export default function AdminEditUserPage() {
   }, [watchedPhotoURL]);
 
   const onSubmit: SubmitHandler<AdminEditProfileFormData> = async (data) => {
+    if (isDemoUser) {
+      toast({ title: "Acción no permitida", description: "La cuenta de demostración no puede editar usuarios.", variant: "destructive"});
+      return;
+    }
     if (!targetUser?.uid) {
       toast({ title: "Error", description: "UID del usuario a editar no encontrado.", variant: "destructive" });
       return;
@@ -132,7 +138,6 @@ export default function AdminEditUserPage() {
         toast({ title: "Error al Actualizar", description: result.error || "No se pudo actualizar el perfil.", variant: "destructive" });
       }
     } catch (error) {
-      console.error("Error en submit de editar perfil (admin):", error);
       toast({ title: "Error Inesperado", description: "Ocurrió un error inesperado.", variant: "destructive" });
     } finally {
       setIsSubmitting(false);
@@ -154,7 +159,7 @@ export default function AdminEditUserPage() {
     );
   }
 
-  if (adminUser?.nivel !== 'admin') {
+  if (adminUser?.nivel !== 'admin' && adminUser?.nivel !== 'demo') {
     return (
       <Alert variant="destructive" className="max-w-xl mx-auto">
         <AlertTriangle className="h-4 w-4" />
@@ -203,7 +208,7 @@ export default function AdminEditUserPage() {
                   <FormItem>
                     <FormLabel htmlFor="displayName">Nombre para Mostrar</FormLabel>
                     <FormControl>
-                      <Input id="displayName" {...field} disabled={isSubmitting} />
+                      <Input id="displayName" {...field} disabled={isSubmitting || isDemoUser} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -216,7 +221,7 @@ export default function AdminEditUserPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel htmlFor="nivel">Nivel de Usuario</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value || "user"} defaultValue={field.value || "user"} disabled={isSubmitting}>
+                    <Select onValueChange={field.onChange} value={field.value || "user"} defaultValue={field.value || "user"} disabled={isSubmitting || isDemoUser}>
                       <FormControl>
                         <SelectTrigger id="nivel">
                           <SelectValue placeholder="Selecciona un nivel" />
@@ -225,6 +230,7 @@ export default function AdminEditUserPage() {
                       <SelectContent>
                         <SelectItem value="user">Usuario (user)</SelectItem>
                         <SelectItem value="admin">Administrador (admin)</SelectItem>
+                        <SelectItem value="demo">Demo (demo)</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -239,7 +245,7 @@ export default function AdminEditUserPage() {
                   <FormItem>
                     <FormLabel htmlFor="photoURL">URL de Foto de Perfil (Opcional)</FormLabel>
                      <FormControl>
-                        <Input id="photoURL" placeholder="https://ejemplo.com/foto.jpg" {...field} disabled={isSubmitting} />
+                        <Input id="photoURL" placeholder="https://ejemplo.com/foto.jpg" {...field} disabled={isSubmitting || isDemoUser} />
                      </FormControl>
                     {photoPreview && (
                       <div className="mt-2 rounded-full overflow-hidden border-2 border-primary h-24 w-24 mx-auto">
@@ -267,7 +273,7 @@ export default function AdminEditUserPage() {
                     <FormItem>
                       <FormLabel htmlFor="phone1">Teléfono Principal (Opcional)</FormLabel>
                        <FormControl>
-                          <Input id="phone1" type="tel" placeholder="Ej: 3001234567" {...field} disabled={isSubmitting} />
+                          <Input id="phone1" type="tel" placeholder="Ej: 3001234567" {...field} disabled={isSubmitting || isDemoUser} />
                        </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -280,7 +286,7 @@ export default function AdminEditUserPage() {
                     <FormItem>
                       <FormLabel htmlFor="phone2">Teléfono Secundario (Opcional)</FormLabel>
                       <FormControl>
-                        <Input id="phone2" type="tel" placeholder="Ej: 3109876543" {...field} disabled={isSubmitting} />
+                        <Input id="phone2" type="tel" placeholder="Ej: 3109876543" {...field} disabled={isSubmitting || isDemoUser} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -299,7 +305,7 @@ export default function AdminEditUserPage() {
                         id="address"
                         placeholder="Ej: Calle Falsa 123, Ciudad"
                         {...field}
-                        disabled={isSubmitting}
+                        disabled={isSubmitting || isDemoUser}
                         rows={3}
                         />
                     </FormControl>
@@ -308,8 +314,8 @@ export default function AdminEditUserPage() {
                 )}
               />
 
-              <Button type="submit" className="w-full" disabled={isSubmitting || authLoading || isLoadingUser}>
-                {isSubmitting ? "Guardando Cambios..." : "Guardar Cambios"}
+              <Button type="submit" className="w-full" disabled={isSubmitting || authLoading || isLoadingUser || isDemoUser}>
+                 {isDemoUser ? "Guardado deshabilitado para Demo" : (isSubmitting ? "Guardando Cambios..." : "Guardar Cambios")}
               </Button>
             </form>
           </Form>

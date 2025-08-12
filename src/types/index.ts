@@ -12,8 +12,10 @@ export interface PetProfile {
   breed: string | null; 
   photoUrl: string;
   photoPath?: string | null; 
+  photoFileId?: string | null;
   photoUrl2?: string | null; 
   photoPath2?: string | null; 
+  photoFileId2?: string | null;
   tipoAnimal: "Perro" | "Gato";
   fechaNacimiento: string; 
   sexo: "Macho" | "Hembra" | null;
@@ -33,9 +35,9 @@ export interface AppUser {
   uid: string;
   email: string | null;
   displayName?: string | null;
-  nivel?: 'admin' | 'user';
+  nivel?: 'admin' | 'user' | 'demo';
   photoURL?: string | null;
-  photoPath?: string | null; 
+  photoFileId?: string | null;
   phone1?: string | null;
   phone2?: string | null;
   address?: string | null;

@@ -17,11 +17,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { LogIn, Loader2 } from 'lucide-react';
+import { LogIn, Loader2, Info } from 'lucide-react';
 import type { AppUser } from '@/types';
 import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
 import logoImage from '@/assets/logo/logo.png';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -34,7 +35,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (!authIsLoading && currentUser && appUser) {
-      if (appUser.nivel === 'admin') {
+      if (appUser.nivel === 'admin' || appUser.nivel === 'demo') {
         router.replace('/admin/dashboard');
       } else {
         router.replace('/home');
@@ -132,8 +133,8 @@ export default function LoginPage() {
         <Image
           src={logoImage}
           alt="Pet Link Logo"
-          width={120}
-          height={48}
+          width={80}
+          height={32}
           priority
           data-ai-hint="logo brand"
         />
@@ -148,8 +149,8 @@ export default function LoginPage() {
         <Image
           src={logoImage}
           alt="Pet Link Logo"
-          width={120}
-          height={48}
+          width={80}
+          height={32}
           priority
           data-ai-hint="logo brand"
         />
@@ -163,6 +164,17 @@ export default function LoginPage() {
           <CardDescription>Ingresa tus credenciales para acceder a tu cuenta.</CardDescription>
         </CardHeader>
         <CardContent>
+          <Alert className="mb-6 bg-blue-50 border-blue-200">
+              <Info className="h-4 w-4 !text-blue-700" />
+              <AlertTitle className="text-blue-800">¡Modo Demostración!</AlertTitle>
+              <AlertDescription className="text-blue-700">
+                  Para explorar la vista de administrador, usa:
+                  <ul className="list-disc pl-5 mt-1">
+                      <li><strong>Email:</strong> demo@petlink.com</li>
+                      <li><strong>Contraseña:</strong> Petlink</li>
+                  </ul>
+              </AlertDescription>
+          </Alert>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
@@ -208,9 +220,6 @@ export default function LoginPage() {
           </p>
         </CardContent>
       </Card>
-      <p className="mt-6 text-center text-sm text-muted-foreground">
-        El inicio de sesión de administrador también usa esta página.
-      </p>
     </div>
   );
 }

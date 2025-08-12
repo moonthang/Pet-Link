@@ -14,6 +14,7 @@ import { useRouter } from "next/navigation";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { cn } from "@/lib/utils";
 
 export default function NotificationsPage() {
   const { appUser } = useAuth();
@@ -164,6 +165,7 @@ export default function NotificationsPage() {
               variant="outline" 
               size="sm"
               disabled={selectedNotificationIds.length === 0 || isLoading}
+              className="disabled:border-border/50 disabled:bg-transparent disabled:text-muted-foreground disabled:opacity-100"
             >
               <CheckCheck className="mr-2 h-4 w-4" />
               Marcar como Leídas
@@ -190,7 +192,7 @@ export default function NotificationsPage() {
           {isLoading && notifications.length === 0 ? ( 
              <div className="space-y-4">
                 {[...Array(3)].map((_, i) => (
-                <div key={i} className="p-4 rounded-md border bg-muted/30 animate-pulse">
+                <div key={i} className="p-4 rounded-md border bg-muted/50 animate-pulse">
                     <Skeleton className="h-4 bg-muted rounded w-3/4 mb-2" />
                     <Skeleton className="h-3 bg-muted rounded w-full mb-2" />
                     <Skeleton className="h-2 bg-muted rounded w-1/4" />
@@ -208,7 +210,10 @@ export default function NotificationsPage() {
               {notifications.map((notification) => (
                 <li 
                   key={notification.id} 
-                  className={`relative p-4 rounded-md border transition-colors ${notification.read ? 'bg-muted/50 hover:bg-muted/60' : 'bg-card shadow-sm hover:bg-accent/10'}`}
+                  className={cn(
+                    "relative p-4 rounded-lg border transition-colors",
+                    notification.read ? 'bg-card' : 'bg-card shadow-md border-primary/50'
+                  )}
                 >
                   <div className="flex items-start gap-3">
                     <Checkbox
@@ -225,7 +230,7 @@ export default function NotificationsPage() {
                           <h3 id={`title-${notification.id}`} className={`font-semibold ${notification.read ? 'text-muted-foreground' : 'text-primary'}`}>
                             {notification.title}
                           </h3>
-                          <p className="text-sm text-foreground mt-1">{notification.message}</p>
+                          <p className="text-sm text-foreground/90 mt-1">{notification.message}</p>
                           <p className="text-xs text-muted-foreground mt-2">
                             {new Date(notification.timestamp).toLocaleString('es-CO', { dateStyle: 'medium', timeStyle: 'short' })}
                           </p>
@@ -240,7 +245,7 @@ export default function NotificationsPage() {
                       {notification.link && (
                         <Button 
                           variant="link" 
-                          className="mt-2 p-0 h-auto text-sm" 
+                          className="mt-2 p-0 h-auto text-sm text-primary" 
                           onClick={() => handleMarkOneAsReadAndNavigate(notification)}
                           disabled={isLoading}
                         >

@@ -32,7 +32,7 @@ export default function NewPetPage() {
     );
   }
   
-  if (appUser.nivel === 'admin') {
+  if (appUser.nivel === 'admin' || appUser.nivel === 'demo') {
     return (
       <div className="space-y-8">
         <h1 className="text-3xl font-bold tracking-tight text-center">Agregar Nueva Mascota</h1>
@@ -48,3 +48,4 @@ export default function NewPetPage() {
     );
   }
 }
+

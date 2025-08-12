@@ -15,6 +15,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import type { PetProfile } from "@/types";
 import { useToast } from "@/hooks/use-toast";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface PetQRModalProps {
   pet: PetProfile;
@@ -74,21 +75,26 @@ export function PetQRModal({ pet }: PetQRModalProps) {
 
   if (!isClient) {
     return (
-      <Button variant="outline" size="sm" disabled>
-        <QrCodeIcon className="mr-2 h-4 w-4" />
-        Mostrar QR (Cargando...)
+      <Button variant="outline" size="icon" disabled>
+        <QrCodeIcon className="h-4 w-4" />
       </Button>
     );
   }
 
   return (
     <Dialog>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90">
-          <QrCodeIcon className="mr-2 h-4 w-4" />
-          Mostrar QR
-        </Button>
-      </DialogTrigger>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <DialogTrigger asChild>
+            <Button variant="outline" size="icon" className="bg-accent text-accent-foreground hover:bg-accent/90">
+              <QrCodeIcon className="h-4 w-4" />
+            </Button>
+          </DialogTrigger>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>Mostrar QR</p>
+        </TooltipContent>
+      </Tooltip>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Código QR para {pet.name}</DialogTitle>

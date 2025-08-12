@@ -18,10 +18,10 @@ export async function createUserProfileInFirestore(
   uid: string,
   email: string,
   displayName: string,
-  nivelParam: 'user' | 'admin',
+  nivelParam: 'user' | 'admin' | 'demo',
   additionalData?: {
     photoURL?: string | null;
-    photoPath?: string | null;
+    photoFileId?: string | null;
     phone1?: string | null;
     phone2?: string | null;
     address?: string | null;
@@ -35,7 +35,7 @@ export async function createUserProfileInFirestore(
       displayName: displayName || email.split('@')[0] || 'Usuario', 
       nivel: nivelParam || 'user', 
       photoURL: additionalData?.photoURL || null,
-      photoPath: additionalData?.photoPath || null,
+      photoFileId: additionalData?.photoFileId || null,
       phone1: additionalData?.phone1 || null,
       phone2: additionalData?.phone2 || null,
       address: additionalData?.address || null,
@@ -45,7 +45,6 @@ export async function createUserProfileInFirestore(
 
     return { success: true, data: newUserProfile };
   } catch (error: any) {
-    console.error("[userActions - createUserProfile] Error al crear perfil de usuario en Firestore:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
     let errorMessage = "Ocurrió un error inesperado al crear el perfil de usuario en Firestore.";
     if (error.code) {
       errorMessage = `Error de Firestore (${error.code}): ${error.message}`;
@@ -64,7 +63,7 @@ export async function updateUserProfileAction(
 ): Promise<ActionResult> {
   const displayName = formData.get("displayName") as string;
   const photoURL = formData.get("photoURL") as string | undefined; 
-  const photoPath = formData.get("photoPath") as string | undefined; 
+  const photoFileId = formData.get("photoFileId") as string | undefined; 
   const phone1 = formData.get("phone1") as string; 
   const phone2 = formData.get("phone2") as string | undefined;
   const address = formData.get("address") as string; 
@@ -88,7 +87,6 @@ export async function updateUserProfileAction(
       return { success: false, error: "Perfil de usuario no encontrado." };
     }
     const existingUserData = userDocSnap.data() as AppUser;
-    const oldPhotoPath = existingUserData.photoPath;
 
     const updateData: Partial<AppUser> = {
       displayName,
@@ -99,8 +97,8 @@ export async function updateUserProfileAction(
     if (photoURL !== undefined) {
         updateData.photoURL = photoURL || null; 
     }
-    if (photoPath !== undefined) {
-        updateData.photoPath = photoPath || null; 
+    if (photoFileId !== undefined) {
+        updateData.photoFileId = photoFileId || null; 
     }
     if (phone2 !== undefined) {
         updateData.phone2 = phone2 || null; 
@@ -116,18 +114,6 @@ export async function updateUserProfileAction(
         delete updateData[key];
       }
     });
-    
-    const newPhotoPath = updateData.photoPath; 
-    const newPhotoUrl = updateData.photoURL;
-
-    if (newPhotoPath !== oldPhotoPath) { 
-        if (oldPhotoPath && oldPhotoPath.trim() !== '' && !oldPhotoPath.startsWith('http')) {
-            deleteImageFromImageKit(oldPhotoPath).catch(e => console.error("[userActions - updateUserProfile] Error no bloqueante al eliminar foto antigua de ImageKit:", e));
-        }
-    } else if (newPhotoUrl === null && oldPhotoPath && !oldPhotoPath.startsWith('http')) { 
-        deleteImageFromImageKit(oldPhotoPath).catch(e => console.error("[userActions - updateUserProfile] Error no bloqueante al eliminar foto (URL nula) de ImageKit:", e));
-        updateData.photoPath = null; 
-    }
 
     batch.update(userDocRef, updateData);
     
@@ -171,7 +157,6 @@ export async function updateUserProfileAction(
     }
 
   } catch (error: any) {
-    console.error("[userActions] Error al actualizar perfil de usuario y/o mascotas asociadas en Firestore:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
     let errorMessage = "Ocurrió un error inesperado al actualizar el perfil y/o las mascotas asociadas.";
     if (error.code) {
       errorMessage = `Error de Firestore (${error.code}): ${error.message}`;
@@ -195,7 +180,6 @@ export async function getAllUsersFromFirestore(): Promise<AppUser[]> {
     });
     return users;
   } catch (error: any) {
-    console.error("[userActions] Error al obtener usuarios de Firestore:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
     return [];
   }
 }
@@ -203,7 +187,6 @@ export async function getAllUsersFromFirestore(): Promise<AppUser[]> {
 
 export async function getUserByIdFromFirestore(userId: string): Promise<AppUser | null> {
   if (!userId) {
-    console.warn("[userActions - getUserByIdFromFirestore] Se proporcionó un userId vacío o nulo.");
     return null;
   }
   const userDocRef = doc(db, "users", userId);
@@ -215,7 +198,6 @@ export async function getUserByIdFromFirestore(userId: string): Promise<AppUser 
       return null;
     }
   } catch (error: any) {
-    console.error(`[userActions] Error al obtener usuario por UID (${userId}) de Firestore:`, JSON.stringify(error, Object.getOwnPropertyNames(error)));
     return null;
   }
 }
@@ -225,16 +207,32 @@ export async function deleteUserAndPetsAction(userId: string): Promise<ActionRes
   const batch = writeBatch(db);
 
   const userDocRef = doc(db, "users", userId);
-  batch.delete(userDocRef);
+  const userSnap = await getDoc(userDocRef);
+
+  if (userSnap.exists()) {
+    const userData = userSnap.data() as AppUser;
+    if (userData.photoFileId) {
+      await deleteImageFromImageKit(userData.photoFileId).catch(e => console.error("Error no bloqueante al eliminar imagen de usuario de ImageKit:", e));
+    }
+    batch.delete(userDocRef);
+  }
+
 
   const mascotasCollectionRef = collection(db, "mascotas");
   const qMascotas = query(mascotasCollectionRef, where("userId", "==", userId));
   
   try {
     const mascotasSnapshot = await getDocs(qMascotas);
-    mascotasSnapshot.forEach((mascotaDoc) => {
+    for (const mascotaDoc of mascotasSnapshot.docs) {
+      const petData = mascotaDoc.data();
+      if (petData.photoFileId) {
+         await deleteImageFromImageKit(petData.photoFileId).catch(e => console.error("Error no bloqueante al eliminar foto principal de mascota de ImageKit:", e));
+      }
+       if (petData.photoFileId2) {
+         await deleteImageFromImageKit(petData.photoFileId2).catch(e => console.error("Error no bloqueante al eliminar foto secundaria de mascota de ImageKit:", e));
+      }
       batch.delete(mascotaDoc.ref);
-    });
+    }
 
     await batch.commit();
     revalidatePath('/admin/users');
@@ -242,7 +240,6 @@ export async function deleteUserAndPetsAction(userId: string): Promise<ActionRes
 
   } catch (error: any)
 {
-    console.error(`[userActions] Error al eliminar usuario ${userId} y/o sus mascotas:`, JSON.stringify(error, Object.getOwnPropertyNames(error)));
     let errorMessage = "Ocurrió un error inesperado al eliminar el usuario y sus mascotas.";
     if (error.code) {
       errorMessage = `Error de Firestore (${error.code}): ${error.message}`;

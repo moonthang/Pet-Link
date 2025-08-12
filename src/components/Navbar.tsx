@@ -107,15 +107,13 @@ export function Navbar() {
 
   const navLinks: NavLinkItem[] = [
     { href: "/home", label: "Inicio", icon: Home, roles: ['all'] },
-    ...(appUser.nivel === 'admin' ? [
-      { href: "/admin/users", label: "Usuarios", icon: Users, roles: ['admin'] },
-      { href: "/admin/dashboard", label: "Panel de Administración", icon: ShieldCheck, roles: ['admin'] },
-    ] : []),
+    { href: "/admin/users", label: "Usuarios", icon: Users, roles: ['admin', 'demo'] },
+    { href: "/admin/dashboard", label: "Panel de Administración", icon: ShieldCheck, roles: ['admin', 'demo'] },
   ];
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-14 items-center">
+    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 -mx-4 px-4">
+      <div className="flex h-14 items-center">
         <div className="md:hidden mr-2">
           <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
             <SheetTrigger asChild>
@@ -164,8 +162,8 @@ export function Navbar() {
           <Image
             src={logoImage}
             alt="Pet Link Logo"
-            width={50}
-            height={20}
+            width={40}
+            height={16}
             priority
             data-ai-hint="logo marca"
             className="mr-2"
@@ -179,9 +177,9 @@ export function Navbar() {
           {navLinks.map((linkItem) => (
              (linkItem.roles.includes('all') || (appUser.nivel && linkItem.roles.includes(appUser.nivel))) && (
                 <Link href={linkItem.href} passHref key={linkItem.href}>
-                  <Button variant="ghost" className="text-sm font-medium">
-                    <linkItem.icon className="mr-2 h-4 w-4" />
-                    {linkItem.label}
+                  <Button variant="ghost" className="text-sm font-medium group hover:bg-transparent">
+                    <linkItem.icon className="mr-2 h-4 w-4 text-foreground/80 group-hover:text-accent transition-colors" />
+                    <span className="text-foreground/80 group-hover:text-accent transition-colors">{linkItem.label}</span>
                   </Button>
                 </Link>
              )
@@ -191,8 +189,8 @@ export function Navbar() {
         <div className="flex items-center space-x-2 ml-auto">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="relative">
-                <Bell className="h-5 w-5" />
+              <Button variant="ghost" size="icon" className="relative group hover:bg-transparent">
+                <Bell className="h-5 w-5 text-foreground group-hover:text-accent transition-colors" />
                 {hasUnread && (
                   <span className="absolute top-1 right-1 flex h-2.5 w-2.5">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-destructive opacity-75"></span>

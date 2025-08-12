@@ -158,8 +158,8 @@ export default function RegisterPage() {
          <Image
           src={logoImage}
           alt="Pet Link Logo"
-          width={120}
-          height={48}
+          width={80}
+          height={32}
           priority
           data-ai-hint="logo brand"
         />

@@ -29,6 +29,7 @@ import { useToast } from "@/hooks/use-toast";
 import { auth, createUserWithEmailAndPassword } from "@/lib/firebase"; 
 import { createUserProfileInFirestore } from "@/actions/userActions";
 import { UserPlus } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const newUserSchema = z.object({
   email: z.string().email("Debe ser un email válido."),
@@ -45,6 +46,8 @@ export default function AdminAddNewUserPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const { appUser } = useAuth();
+  const isDemoUser = appUser?.nivel === 'demo';
 
   const form = useForm<NewUserFormData>({
     resolver: zodResolver(newUserSchema),
@@ -57,6 +60,14 @@ export default function AdminAddNewUserPage() {
   });
 
   const onSubmit: SubmitHandler<NewUserFormData> = async (data) => {
+    if (isDemoUser) {
+      toast({
+        title: "Acción no permitida",
+        description: "La cuenta de demostración no puede crear usuarios.",
+        variant: "destructive"
+      });
+      return;
+    }
     setIsLoading(true);
     try {
       
@@ -89,7 +100,6 @@ export default function AdminAddNewUserPage() {
         throw new Error("No se pudo obtener el usuario de Firebase Auth después de la creación.");
       }
     } catch (error: any) {
-      console.error("Error al crear nuevo usuario:", error);
       let errorMessage = "Ocurrió un error inesperado al crear el usuario.";
       if (error.code) { 
         switch (error.code) {
@@ -140,7 +150,7 @@ export default function AdminAddNewUserPage() {
                   <FormItem>
                     <FormLabel htmlFor="displayName">Nombre para Mostrar</FormLabel>
                     <FormControl>
-                      <Input id="displayName" placeholder="Ej: Juan Pérez" {...field} />
+                      <Input id="displayName" placeholder="Ej: Juan Pérez" {...field} disabled={isDemoUser} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -153,7 +163,7 @@ export default function AdminAddNewUserPage() {
                   <FormItem>
                     <FormLabel htmlFor="email">Email</FormLabel>
                     <FormControl>
-                      <Input id="email" type="email" placeholder="usuario@ejemplo.com" {...field} />
+                      <Input id="email" type="email" placeholder="usuario@ejemplo.com" {...field} disabled={isDemoUser} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -166,7 +176,7 @@ export default function AdminAddNewUserPage() {
                   <FormItem>
                     <FormLabel htmlFor="password">Contraseña</FormLabel>
                     <FormControl>
-                      <Input id="password" type="password" placeholder="Mínimo 6 caracteres" {...field} />
+                      <Input id="password" type="password" placeholder="Mínimo 6 caracteres" {...field} disabled={isDemoUser} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -178,7 +188,7 @@ export default function AdminAddNewUserPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel htmlFor="nivel">Nivel de Usuario</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value || ""} defaultValue={field.value || "user"}>
+                    <Select onValueChange={field.onChange} value={field.value || ""} defaultValue={field.value || "user"} disabled={isDemoUser}>
                       <FormControl>
                         <SelectTrigger id="nivel">
                           <SelectValue placeholder="Selecciona un nivel" />
@@ -193,8 +203,8 @@ export default function AdminAddNewUserPage() {
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Creando Usuario..." : "Crear Usuario"}
+              <Button type="submit" className="w-full" disabled={isLoading || isDemoUser}>
+                {isDemoUser ? "Creación deshabilitada para Demo" : (isLoading ? "Creando Usuario..." : "Crear Usuario")}
               </Button>
             </form>
           </Form>

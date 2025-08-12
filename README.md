@@ -102,41 +102,16 @@ Este proyecto sirve como un portafolio demostrando habilidades en desarrollo ful
 
 ## 📸 Capturas de Pantalla
 
-*   **Página de Inicio de Sesión:**
-![login](https://github.com/user-attachments/assets/77f2cf11-0b5f-431a-ac35-8f8d173982a2)
-
-*   **Página de Registro:**
-![registro](https://github.com/user-attachments/assets/b63d3f56-20f0-42bc-a2f8-c236c9b357cb)
-
-*   **Dashboard Principal del Usuario (Lista de Mascotas con Búsqueda):**
-![dash-usuario](https://github.com/user-attachments/assets/e47a3526-20c3-4d8d-a118-e678b92c2192)
-
-*   **Perfil de Mascota (Vista Dueño/Admin con Visor de Imágenes y Mapa):**
-![perfil-mascota-user](https://github.com/user-attachments/assets/d06e1da7-ebcc-4e14-a765-ddab28e9eb8f)
-
-*   **Perfil Público de Mascota (Vista QR Escaneado):**
-![perfil-mascota-publico](https://github.com/user-attachments/assets/7630334c-490d-4421-b7fe-50f612c5e713)
-
-*   **Modal del Código QR:**
-![qrMascota](https://github.com/user-attachments/assets/4ebdd8ff-e51d-46e8-9f66-579d3786c62b)
-
-*   **Formulario de Agregar/Editar Mascota:**
-![editar-mascota](https://github.com/user-attachments/assets/f0433218-d6f3-4d24-b014-a51139f2798a)
-
-*   **Formulario de Editar Perfil de Usuario:**
-![editar-perfil](https://github.com/user-attachments/assets/74d694f9-9e49-451e-9418-462ace5b1df6)
-
-*   **Panel de Administrador (Lista de Usuarios con Búsqueda):**
-![lista-usuario-admin](https://github.com/user-attachments/assets/919c5944-4dda-4a8e-8b91-2e389b3fa386)
-![perfil-usuario-vistaAdmin](https://github.com/user-attachments/assets/6a42b6a2-76c8-4c77-a634-6d508e695f0e)
-
-
-*   **Página de Notificaciones:**
-![pagina-notificaciones](https://github.com/user-attachments/assets/e608a039-27ce-4f05-bb51-8aea343ef501)
-![Notificación-user](https://github.com/user-attachments/assets/4fb4d963-146d-4358-a3a5-62dc23aa7b2c)
-
-
-* El problema (issue) que aparece en algunas capturas corresponde a que la extensión LanguageTool modifica el DOM, y al deshabilitar la extensión, este problema desaparece.
+| Vista | Captura |
+| :---: | :---: |
+| **Inicio de Sesión y Registro** | ![login](https://github.com/user-attachments/assets/77f2cf11-0b5f-431a-ac35-8f8d173982a2) ![registro](https://github.com/user-attachments/assets/b63d3f56-20f0-42bc-a2f8-c236c9b357cb) |
+| **Dashboard Principal (Usuario)** | ![dash-usuario](https://github.com/user-attachments/assets/e47a3526-20c3-4d8d-a118-e678b92c2192) |
+| **Perfil de Mascota (Vista Dueño)** | ![perfil-mascota-user](https://github.com/user-attachments/assets/d06e1da7-ebcc-4e14-a765-ddab28e9eb8f) |
+| **Perfil Público (Escaneo QR)** | ![perfil-mascota-publico](https://github.com/user-attachments/assets/7630334c-490d-4421-b7fe-50f612c5e713) |
+| **Modal de Código QR** | ![qrMascota](https://github.com/user-attachments/assets/4ebdd8ff-e51d-46e8-9f66-579d3786c62b) |
+| **Formularios de Edición** | ![editar-mascota](https://github.com/user-attachments/assets/f0433218-d6f3-4d24-b014-a51139f2798a) ![editar-perfil](https://github.com/user-attachments/assets/74d694f9-9e49-451e-9418-462ace5b1df6) |
+| **Panel de Administración** | ![lista-usuario-admin](https://github.com/user-attachments/assets/919c5944-4dda-4a8e-8b91-2e389b3fa386) ![perfil-usuario-vistaAdmin](https://github.com/user-attachments/assets/6a42b6a2-76c8-4c77-a634-6d508e695f0e) |
+| **Notificaciones** | ![pagina-notificaciones](https://github.com/user-attachments/assets/e608a039-27ce-4f05-bb51-8aea343ef501) ![Notificación-user](https://github.com/user-attachments/assets/4fb4d963-146d-4358-a3a5-62dc23aa7b2c) |
 
 ## 🧑‍💻 Uso del Sistema
 
@@ -193,16 +168,6 @@ El proyecto sigue la estructura estándar de Next.js con el App Router:
     *   `types/`: Definiciones de TypeScript.
 *   `next.config.ts`: Configuración de Next.js (incluyendo `remotePatterns` para imágenes de ImageKit).
 *   `package.json`: Dependencias y scripts del proyecto.
-
-## 🤝 Contribuciones
-
-¡Las contribuciones son bienvenidas! Si deseas contribuir a Pet Link:
-
-1.  Haz un Fork del repositorio (`https://github.com/moonthang/PetLink`).
-2.  Crea una nueva rama para tu característica o corrección (`git checkout -b feature/nueva-caracteristica` o `git checkout -b fix/bug-corregido`).
-3.  Realiza tus cambios y haz commit (`git commit -m 'Añade nueva característica X'`).
-4.  Haz Push a tu rama (`git push origin feature/nueva-caracteristica`).
-5.  Abre un Pull Request describiendo tus cambios.
 
 ## 🗺️ Roadmap
 

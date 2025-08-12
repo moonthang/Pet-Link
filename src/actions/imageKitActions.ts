@@ -57,42 +57,25 @@ export async function getClientSideAuthParams(): Promise<
   }
 }
 
-export async function deleteImageFromImageKit(filePath: string): Promise<{ success: boolean; error?: string }> {
-  console.log(`[ImageKitActions - deleteImage] Solicitud para eliminar archivo con filePath: '${filePath}'`);
+export async function deleteImageFromImageKit(fileId: string): Promise<{ success: boolean; error?: string }> {
+  console.log(`[ImageKitActions - deleteImage] Solicitud para eliminar archivo con fileId: '${fileId}'`);
   if (!imagekitInstance) {
     console.error('[ImageKitActions - deleteImage] El SDK de ImageKit no está inicializado.');
     return { success: false, error: 'El SDK de ImageKit no está inicializado.' };
   }
-  if (!filePath || typeof filePath !== 'string' || filePath.trim() === '') {
-    console.warn('[ImageKitActions - deleteImage] filePath no válido proporcionado:', filePath);
-    return { success: false, error: 'Ruta de archivo no válida para eliminar.' };
+  if (!fileId || typeof fileId !== 'string' || fileId.trim() === '') {
+    console.warn('[ImageKitActions - deleteImage] fileId no válido proporcionado:', fileId);
+    return { success: false, error: 'ID de archivo no válido para eliminar.' };
   }
-
-  const normalizedPath = filePath.startsWith('/') ? filePath.substring(1) : filePath;
-  console.log(`[ImageKitActions - deleteImage] Path normalizado para búsqueda en ImageKit: '${normalizedPath}'`);
   
   try {
-    const files = await imagekitInstance.listFiles({
-      path: normalizedPath, 
-      limit: 1 
-    });
-
-    console.log(`[ImageKitActions - deleteImage] Resultado de listFiles para path '${normalizedPath}':`, files);
-
-    if (files && files.length > 0) {
-      const fileIdToDelete = files[0].fileId;
-      console.log(`[ImageKitActions - deleteImage] Archivo encontrado con ID: '${fileIdToDelete}'. Intentando eliminar...`);
-      await imagekitInstance.deleteFile(fileIdToDelete);
-      console.log(`[ImageKitActions - deleteImage] Archivo con ID ${fileIdToDelete} (path: ${filePath}) eliminado exitosamente de ImageKit.`);
-      return { success: true };
-    } else {
-      console.warn(`[ImageKitActions - deleteImage] No se encontró archivo en ImageKit con path: '${filePath}' (normalizado: '${normalizedPath}'). No se eliminó nada.`);
-      return { success: true, error: 'Archivo no encontrado en ImageKit, no se eliminó.' }; 
-    }
+    await imagekitInstance.deleteFile(fileId);
+    console.log(`[ImageKitActions - deleteImage] Archivo con ID ${fileId} eliminado exitosamente de ImageKit.`);
+    return { success: true };
 
   } catch (error: any) {
     console.error(
-      `[ImageKitActions - deleteImage] Error al interactuar con ImageKit API para eliminar archivo '${filePath}':`,
+      `[ImageKitActions - deleteImage] Error al interactuar con ImageKit API para eliminar archivo con ID '${fileId}':`,
       JSON.stringify(error, Object.getOwnPropertyNames(error))
     );
     return { success: false, error: error.message || 'Error al eliminar la imagen de ImageKit.' };

@@ -12,24 +12,37 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
+import { Button, type ButtonProps } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Trash2 } from "lucide-react";
 import { useState } from "react";
 import { deleteUserAndPetsAction } from "@/actions/userActions";
+import { useAuth } from "@/contexts/AuthContext";
+import { cn } from "@/lib/utils";
 
-interface DeleteUserButtonProps {
+interface DeleteUserButtonProps extends ButtonProps {
   userId: string;
   userName: string;
   onUserDeleted: (userId: string) => void;
 }
 
-export function DeleteUserButton({ userId, userName, onUserDeleted }: DeleteUserButtonProps) {
+export function DeleteUserButton({ userId, userName, onUserDeleted, variant = "destructive", size = "icon", className, ...props }: DeleteUserButtonProps) {
   const { toast } = useToast();
+  const { appUser } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  
+  const isDemoUser = appUser?.nivel === 'demo';
 
   const handleDelete = async () => {
+    if (isDemoUser) {
+      toast({
+        title: "Acción no permitida",
+        description: "La cuenta de demostración no puede eliminar usuarios.",
+        variant: "destructive"
+      });
+      return;
+    }
     setIsLoading(true);
     try {
       const result = await deleteUserAndPetsAction(userId);
@@ -48,7 +61,6 @@ export function DeleteUserButton({ userId, userName, onUserDeleted }: DeleteUser
         });
       }
     } catch (error) {
-      console.error("Error en DeleteUserButton:", error);
       toast({
         title: "Error Inesperado",
         description: "Ocurrió un error inesperado al intentar eliminar el usuario.",
@@ -62,9 +74,15 @@ export function DeleteUserButton({ userId, userName, onUserDeleted }: DeleteUser
   return (
     <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
       <AlertDialogTrigger asChild>
-        <Button variant="destructive" size="sm"> 
-          <Trash2 className="mr-2 h-4 w-4" />
-          Eliminar
+        <Button 
+          variant={variant} 
+          size={size} 
+          disabled={isDemoUser} 
+          title={isDemoUser ? "Deshabilitado para cuenta demo" : "Eliminar usuario"}
+          className={cn(className)}
+          {...props}
+        > 
+          <Trash2 className="h-4 w-4" />
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
